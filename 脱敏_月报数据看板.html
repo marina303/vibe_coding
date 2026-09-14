@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设备数据看板 - 轻奢优雅风</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f8f7f4;--text:#1a1a1a;--text-light:#6b6b6b;--text-lighter:#999;--accent:#ff6b35;--glass-bg:rgba(255,255,255,0.7);--glass-border:rgba(255,255,255,0.5);--shadow:0 8px 32px rgba(0,0,0,0.08);--shadow-hover:0 16px 48px rgba(0,0,0,0.12)}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;overflow-x:hidden}
+.topbar{position:fixed;top:0;left:0;right:0;height:72px;background:rgba(248,247,244,0.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,0,0,0.05);display:flex;align-items:center;padding:0 40px;z-index:100}
+.topbar-logo{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.5px}
+.topbar-logo span{color:var(--accent)}
+.topbar-nav{display:flex;gap:8px;margin-left:60px}
+.topbar-nav a{padding:10px 20px;border-radius:30px;font-size:14px;font-weight:500;color:var(--text-light);text-decoration:none;transition:all 0.3s ease;cursor:pointer}
+.topbar-nav a:hover{color:var(--text);background:rgba(0,0,0,0.05)}
+.topbar-nav a.active{background:var(--accent);color:white}
+.main{padding:100px 32px 60px;width:100%;box-sizing:border-box}
+.page{display:none}
+.page.active{display:block}
+.hero{margin-bottom:48px}
+.hero-label{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.hero h1{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}
+.hero p{font-size:18px;color:var(--text-light);max-width:600px}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:40px}
+.stat-card{background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:20px;padding:20px;box-shadow:var(--shadow);transition:all 0.4s cubic-bezier(0.4,0,0.2,1);position:relative}
+.stat-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.stat-card .label{font-size:12px;color:var(--text-lighter);font-weight:500;margin-bottom:8px}
+.stat-card .value{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:6px}
+.stat-card .sub{font-size:12px;color:var(--text-light)}
+.stat-card .trend{background:#e8f5e9;color:#2e7d32;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:6px}
+.glass-card{background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:24px;padding:32px;box-shadow:var(--shadow)}
+.glass-card h3{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.glass-card h3 .icon{font-size:24px}
+.platform-hero{background:white;border-radius:28px;padding:40px;margin-bottom:32px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow)}
+.platform-hero .ph-left h2{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;margin-bottom:8px}
+.platform-hero .ph-left .meta{color:var(--text-light);font-size:14px}
+.platform-hero .ph-stats{display:flex;gap:48px}
+.platform-hero .ph-stat{text-align:center}
+.platform-hero .ph-stat .val{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700}
+.platform-hero .ph-stat .txt{font-size:12px;color:var(--text-lighter);margin-top:4px}
+.back-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:white;border-radius:30px;font-size:14px;font-weight:500;color:var(--text);text-decoration:none;box-shadow:var(--shadow);transition:all 0.3s ease;margin-bottom:24px;cursor:pointer}
+.back-btn:hover{transform:translateX(-4px);box-shadow:var(--shadow-hover)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px}
+.chart-card{background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:20px;padding:16px;box-shadow:var(--shadow);position:relative}
+.chart-card h4{font-size:14px;font-weight:600;color:var(--text-light);margin-bottom:12px}
+.chart-wrap{height:160px;min-width:200px}
+.top5-table-wrap{margin-top:12px;overflow-x:auto}
+.top5-data-table{width:100%;border-collapse:collapse;font-size:12px}
+.top5-data-table th{text-align:left;padding:6px 10px;background:rgba(0,0,0,0.03);color:var(--text-lighter);font-weight:600;border-bottom:2px solid var(--glass-border)}
+.top5-data-table td{padding:6px 10px;color:var(--text);border-bottom:1px solid rgba(0,0,0,0.04)}
+.top5-data-table tr:last-child td{border-bottom:none}
+.top5-data-table .trend-up{color:#10b981;font-weight:500}
+.top5-data-table .trend-down{color:#ef4444;font-weight:500}
+.top5-data-table .name-cell{display:flex;align-items:center;gap:6px}
+.top5-data-table .name-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.analysis-input{width:100%;min-height:120px;padding:14px;border:1px solid var(--glass-border);border-radius:12px;background:rgba(255,255,255,0.5);font-size:13px;color:var(--text);resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box}
+.analysis-input:focus{outline:none;border-color:var(--primary);background:rgba(255,255,255,0.8)}
+.analysis-input::placeholder{color:#adb5bd}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;margin:28px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(0,0,0,0.08)}
+.analysis-block{font-size:13px;line-height:1.8;color:var(--text-light)}
+.analysis-block p{margin-bottom:10px}
+.analysis-block strong{color:var(--text);font-weight:600}
+.gradient-blob{position:fixed;border-radius:50%;filter:blur(100px);opacity:0.5;z-index:-1;pointer-events:none}
+.blob-1{width:600px;height:600px;background:linear-gradient(135deg,#ffecd2,#fcb69f);top:-200px;right:-200px}
+.blob-2{width:500px;height:500px;background:linear-gradient(135deg,#a8edea,#fed6e3);bottom:-150px;left:-150px}
+.scale-wrapper{transform-origin:top center;overflow-x:hidden}
+@media(max-width:1200px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.topbar{padding:0 20px}.topbar-nav{display:none}.main{padding:90px 20px 40px}.hero h1{font-size:32px}.stats-grid{grid-template-columns:1fr}.platform-hero{flex-direction:column;gap:32px}.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="gradient-blob blob-1"></div>
+<div class="gradient-blob blob-2"></div>
+<div class="scale-wrapper">
+<nav class="topbar">
+<div class="topbar-logo">Data<span>Board</span></div>
+<div class="topbar-nav">
+<a class="active" data-page="home">概览</a>
+<a data-page="pc">PC</a>
+<a data-page="aipc">AIPC</a>
+<a data-page="pad">Pad</a>
+<a data-page="phone">Phone</a>
+<a data-page="ott">OTT</a>
+</div>
+</nav>
+<main class="main">
+
+<!-- ================= 概览页（替换为 aa.html 中的轻奢优雅风格） ================= -->
+<div id="page-home" class="page active">
+<div class="hero">
+<div class="hero-label">2020年1月 数据已经过脱敏处理，非真实数据，仅做展示</div>
+<h1>设备数据看板</h1>
+<p>整体设备核心指标及五端数据分析，洞察业务增长趋势</p>
+</div>
+
+<!-- 模块一：MAD & DAD 分析（新设计） -->
+<div id="section-mad" class="section-title" style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;margin:32px 20px 20px;display:flex;align-items:center;gap:10px"><span style="font-size:28px">📈</span> MAD &amp; DAD 分析</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+<div class="glass-card" style="padding:20px;display:flex;flex-direction:column">
+<div style="text-align:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(0,0,0,0.06)">
+<div style="font-size:12px;color:var(--text-lighter);font-weight:600;letter-spacing:1px;margin-bottom:4px">MAD</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#3b82f6;letter-spacing:-1px">46.29<span style="font-size:14px"> M</span></div>
+<div style="font-size:12px;color:#10b981;margin-top:4px">整体 · 环比 +7.1%</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1">
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(59,130,246,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#3b82f6">PC</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+8.7%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#3b82f6">38.35<span style="font-size:11px"> M</span></div>
+<div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(59,130,246,0.25)">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:11px;color:#8b5cf6">└ AIPC</div>
+<div style="font-size:11px;color:#10b981;font-weight:600">+11.6%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#8b5cf6;margin-top:2px">2.81<span style="font-size:9px"> M</span></div>
+</div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(16,185,129,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#10b981">Pad</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+0.3%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#10b981">5.69<span style="font-size:11px"> M</span></div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(245,158,11,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#f59e0b">Phone</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+2.6%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#f59e0b">1.64<span style="font-size:11px"> M</span></div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(239,68,68,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#ef4444">OTT</div>
+<div style="font-size:11px;color:#ef4444;background:rgba(239,68,68,0.12);padding:3px 8px;border-radius:6px;font-weight:600">-10.5%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#ef4444">60.58<span style="font-size:11px"> 万</span></div>
+</div>
+</div>
+</div>
+<div class="glass-card" style="padding:20px;display:flex;flex-direction:column">
+<div style="text-align:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(0,0,0,0.06)">
+<div style="font-size:12px;color:var(--text-lighter);font-weight:600;letter-spacing:1px;margin-bottom:4px">DAD</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#8b5cf6;letter-spacing:-1px">26.10<span style="font-size:14px"> M</span></div>
+<div style="font-size:12px;color:#10b981;margin-top:4px">整体 · 环比 +22.5%</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1">
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(59,130,246,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#3b82f6">PC</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+28.1%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#3b82f6">20.27<span style="font-size:11px"> M</span></div>
+<div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(59,130,246,0.25)">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:11px;color:#8b5cf6">└ AIPC</div>
+<div style="font-size:11px;color:#10b981;font-weight:600">+9.1%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#8b5cf6;margin-top:2px">2.07<span style="font-size:9px"> M</span></div>
+</div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(16,185,129,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#10b981">Pad</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+7.4%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#10b981">4.26<span style="font-size:11px"> M</span></div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(245,158,11,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#f59e0b">Phone</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+7.1%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#f59e0b">1.29<span style="font-size:11px"> M</span></div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(239,68,68,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#ef4444">OTT</div>
+<div style="font-size:11px;color:#ef4444;background:rgba(239,68,68,0.12);padding:3px 8px;border-radius:6px;font-weight:600">-8.4%</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#ef4444">27.70<span style="font-size:11px"> 万</span></div>
+</div>
+</div>
+</div>
+<div class="glass-card" style="padding:20px;display:flex;flex-direction:column">
+<div style="text-align:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(0,0,0,0.06)">
+<div style="font-size:12px;color:var(--text-lighter);font-weight:600;letter-spacing:1px;margin-bottom:4px">活跃度</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#10b981;letter-spacing:-1px">56.4<span style="font-size:14px">%</span></div>
+<div style="font-size:12px;color:var(--text-light);margin-top:4px">整体 DAD/MAD</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1">
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(59,130,246,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#3b82f6">PC</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+8.0pp</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#3b82f6">52.8<span style="font-size:11px">%</span></div>
+<div style="margin-top:10px;padding-top:8px;border-top:1px dashed rgba(59,130,246,0.25)">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:11px;color:#8b5cf6">└ AIPC</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#8b5cf6;margin-top:2px">73.7<span style="font-size:9px">%</span></div>
+</div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(16,185,129,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#10b981">Pad</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+4.9pp</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#10b981">74.8<span style="font-size:11px">%</span></div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(245,158,11,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#f59e0b">Phone</div>
+<div style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:3px 8px;border-radius:6px;font-weight:600">+3.3pp</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#f59e0b">79.1<span style="font-size:11px">%</span></div>
+</div>
+<div style="background:white;border-radius:14px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,0.06);border:1px solid rgba(239,68,68,0.15)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+<div style="font-size:13px;font-weight:600;color:#ef4444">OTT</div>
+</div>
+<div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#ef4444">45.7<span style="font-size:11px">%</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="glass-card" style="padding:20px;display:flex;flex-direction:column">
+<h3 style="font-size:14px;margin-bottom:16px">📝 分析结论</h3>
+<div class="analysis-block" contenteditable="true" style="font-size:12px;line-height:2;overflow-y:auto;max-height:200px">
+<p style="margin-bottom:12px"><strong>1. 整体趋势：</strong>3月 MAD 达 <strong>4629万</strong>，环比 <strong style="color:#10b981">+7.1%</strong>，创近一年新高；DAD <strong>2610万</strong>，环比 <strong style="color:#10b981">+22.5%</strong>，增速强劲。</p>
+<p style="margin-bottom:12px"><strong>2. PC 绝对主力：</strong>PC MAD <strong style="color:#3b82f6">3835万</strong>（占比82.9%），是绝对主力。PC DAD 环比 <strong style="color:#10b981">+28.1%</strong>，增幅远超 MAD，说明存量用户活跃度显著提升。</p>
+<p style="margin-bottom:12px"><strong>3. AIPC 增速领先：</strong>AIPC MAD <strong style="color:#8b5cf6">281万</strong>，环比 <strong style="color:#10b981">+11.6%</strong>，增速领先整体。AIPC 活跃度 <strong style="color:#8b5cf6">73.7%</strong>，明显高于 PC 整体的 52.8%，AI 用户粘性更强。</p>
+<p style="margin-bottom:12px"><strong>4. 移动端平稳：</strong>Pad MAD <strong style="color:#10b981">569万</strong>（+0.3%）、Phone MAD <strong style="color:#f59e0b">164万</strong>（+2.6%），均稳步增长。Phone 活跃度 <strong style="color:#f59e0b">79.1%</strong> 各端最高，用户粘性最强。</p>
+<p style="margin-bottom:12px"><strong>5. 渠道表现（PC）：</strong>渠道三 渠道增长最快（+16.1%），渠道二 渠道增长 +10.0%，渠道一 渠道稳定增长 +11.5%。系列D表现亮眼，MAD 达 375万，环比 +6.0%。</p>
+<p><strong>6. 留存改善显著：</strong>PC 新增留存率提升 <strong style="color:#10b981">+11.0pp</strong>（70.7%→81.7%），活跃留存率提升 <strong style="color:#10b981">+5.2pp</strong>（86.7%→91.9%），用户质量明显改善。</p>
+</div>
+</div>
+
+<!-- 模块二：各端新增分析 -->
+<div id="section-new" class="section-title" style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;margin:32px 20px 20px;display:flex;align-items:center;gap:10px"><span style="font-size:28px">🆕</span> 各端新增分析</div>
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);gap:20px;margin:0 20px 20px">
+<div class="stat-card" style="padding:32px;text-align:center;background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));min-height:140px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:18px;color:var(--text-lighter);margin-bottom:12px;font-weight:600">PC 新增</div><div class="value" style="font-family:'Space Grotesk',sans-serif;font-size:52px;font-weight:700;color:#3b82f6;letter-spacing:-1px">85.71<span style="font-size:22px"> 万</span></div><div class="sub" style="margin-top:12px;font-size:14px;color:var(--text-light)">48.88万 → 85.71万 · 环比 <span style="color:#10b981">+75.3%</span></div></div>
+<div class="stat-card" style="padding:32px;text-align:center;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.02));min-height:140px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:18px;color:var(--text-lighter);margin-bottom:12px;font-weight:600">AIPC 新增</div><div class="value" style="font-family:'Space Grotesk',sans-serif;font-size:52px;font-weight:700;color:#8b5cf6;letter-spacing:-1px">21.40<span style="font-size:22px"> 万</span></div><div class="sub" style="margin-top:12px;font-size:14px;color:var(--text-light)">13.90万 → 21.40万 · 环比 <span style="color:#10b981">+54.0%</span></div></div>
+<div class="stat-card" style="padding:32px;text-align:center;background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.02));min-height:140px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:18px;color:var(--text-lighter);margin-bottom:12px;font-weight:600">Pad 新增</div><div class="value" style="font-family:'Space Grotesk',sans-serif;font-size:52px;font-weight:700;color:#10b981;letter-spacing:-1px">22.74<span style="font-size:22px"> 万</span></div><div class="sub" style="margin-top:12px;font-size:14px;color:var(--text-light)">17.61万 → 22.74万 · 环比 <span style="color:#10b981">+29.2%</span></div></div>
+<div class="stat-card" style="padding:32px;text-align:center;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.02));min-height:140px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:18px;color:var(--text-lighter);margin-bottom:12px;font-weight:600">Phone 新增</div><div class="value" style="font-family:'Space Grotesk',sans-serif;font-size:52px;font-weight:700;color:#f59e0b;letter-spacing:-1px">5.68<span style="font-size:22px"> 万</span></div><div class="sub" style="margin-top:12px;font-size:14px;color:var(--text-light)">4.26万 → 5.68万 · 环比 <span style="color:#10b981">+33.2%</span></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:0 20px 16px;align-items:stretch;min-height:350px">
+<div class="chart-card"><h4>整体新增趋势（近一年）</h4><div class="chart-wrap" id="homeNewTrendChart" style="height:320px"></div></div>
+<div class="glass-card" style="padding:20px;display:flex;flex-direction:column;min-height:280px">
+<h3 style="font-size:14px;margin-bottom:16px">📝 分析结论</h3>
+<div class="analysis-block" contenteditable="true" style="font-size:12px;line-height:2;overflow-y:auto;max-height:267px">
+<p style="margin-bottom:12px"><strong>1. 整体新增爆发：</strong>3月整体新增 <strong>114万</strong>，环比 <strong style="color:#10b981">+61.0%</strong>，创近一年最大增幅。</p>
+<p style="margin-bottom:12px"><strong>2. PC 贡献最大：</strong>PC 新增 <strong style="color:#3b82f6">85.71万</strong>，环比 <strong style="color:#10b981">+75.3%</strong>，占整体75.0%。渠道三 渠道领跑（+97.7%），渠道二（+76.7%）、渠道一（+68.2%）均呈现爆发式增长。</p>
+<p style="margin-bottom:12px"><strong>3. 系列表现（PC）：</strong>系列B新增 <strong>23.3万</strong>（+79.4%）贡献最大；系列A <strong>21.2万</strong>（+54.6%）；系列D <strong>11.5万</strong>（+64.2%）。</p>
+<p style="margin-bottom:12px"><strong>4. Pad 机型表现：</strong>机型B5 贡献 <strong>6.9万</strong>（+23.6%）成为增量主力；机型A1 新增 <strong>5.9万</strong>（+5.7%）。</p>
+<p style="margin-bottom:12px"><strong>5. AIPC 新增强劲：</strong>AIPC 新增 <strong style="color:#8b5cf6">21.40万</strong>，环比 <strong style="color:#10b981">+54.0%</strong>，增速仅次于 PC。</p>
+<p><strong>6. Phone 稳步增长：</strong>Phone 新增 <strong style="color:#f59e0b">5.68万</strong>，环比 <strong style="color:#10b981">+33.2%</strong>，保持稳定增长。</p>
+</div>
+</div>
+</div>
+
+<!-- 模块三：留存分析 -->
+<div id="section-ret" class="section-title" style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;margin:32px 20px 20px;display:flex;align-items:center;gap:10px"><span style="font-size:28px">🔄</span> 各端留存分析</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:0 20px 12px">
+<div class="stat-card" style="padding:24px 20px;text-align:center;background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));min-height:120px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:14px;color:var(--text-lighter);margin-bottom:8px;font-weight:600">PC 新增留存率</div><div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#3b82f6;letter-spacing:-1px">81.7%</div><div style="margin-top:8px;font-size:12px;color:var(--text-light)">+11.0pp</div></div>
+<div class="stat-card" style="padding:24px 20px;text-align:center;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.02));min-height:120px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:14px;color:var(--text-lighter);margin-bottom:8px;font-weight:600">AIPC 新增留存率</div><div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#8b5cf6;letter-spacing:-1px">89.2%</div><div style="margin-top:8px;font-size:12px;color:var(--text-light)">+3.9pp</div></div>
+<div class="stat-card" style="padding:24px 20px;text-align:center;background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.02));min-height:120px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:14px;color:var(--text-lighter);margin-bottom:8px;font-weight:600">Pad 新增留存率</div><div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#10b981;letter-spacing:-1px">74.7%</div><div style="margin-top:8px;font-size:12px;color:var(--text-light)">+1.7pp</div></div>
+<div class="stat-card" style="padding:24px 20px;text-align:center;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.02));min-height:120px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:14px;color:var(--text-lighter);margin-bottom:8px;font-weight:600">Phone 新增留存率</div><div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#f59e0b;letter-spacing:-1px">77.7%</div><div style="margin-top:8px;font-size:12px;color:var(--text-light)">+0.8pp</div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:0 20px 20px">
+<div class="stat-card" style="padding:24px 20px;text-align:center;background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));min-height:120px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:14px;color:var(--text-lighter);margin-bottom:8px;font-weight:600">PC 活跃留存率</div><div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#3b82f6;letter-spacing:-1px">91.9%</div><div style="margin-top:8px;font-size:12px;color:var(--text-light)">+5.2pp</div></div>
+<div class="stat-card" style="padding:24px 20px;text-align:center;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.02));min-height:120px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:14px;color:var(--text-lighter);margin-bottom:8px;font-weight:600">AIPC 活跃留存率</div><div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#8b5cf6;letter-spacing:-1px">97.0%</div><div style="margin-top:8px;font-size:12px;color:var(--text-light)">+5.2pp</div></div>
+<div class="stat-card" style="padding:24px 20px;text-align:center;background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.02));min-height:120px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:14px;color:var(--text-lighter);margin-bottom:8px;font-weight:600">Pad 活跃留存率</div><div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#10b981;letter-spacing:-1px">93.7%</div><div style="margin-top:8px;font-size:12px;color:var(--text-light)">+1.3pp</div></div>
+<div class="stat-card" style="padding:24px 20px;text-align:center;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.02));min-height:120px;display:flex;flex-direction:column;justify-content:center"><div class="label" style="font-size:14px;color:var(--text-lighter);margin-bottom:8px;font-weight:600">Phone 活跃留存率</div><div style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;color:#f59e0b;letter-spacing:-1px">93.4%</div><div style="margin-top:8px;font-size:12px;color:var(--text-light)">+1.5pp</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:0 20px;align-items:stretch;min-height:280px">
+<div class="glass-card" style="padding:20px;display:flex;flex-direction:column">
+<h3 style="font-size:14px;margin-bottom:16px">📝 分析结论</h3>
+<div class="analysis-block" contenteditable="true" style="font-size:12px;line-height:2;overflow-y:auto;max-height:200px">
+<p style="margin-bottom:10px"><strong>1. PC 留存双升：</strong>PC 新增留存率 <strong style="color:#3b82f6">81.7%</strong>（<strong style="color:#10b981">+11.0pp</strong>），活跃留存率 <strong style="color:#3b82f6">91.9%</strong>（<strong style="color:#10b981">+5.2pp</strong>），用户质量显著改善。</p>
+<p style="margin-bottom:10px"><strong>2. PC 系列留存：</strong>系列B活跃留存率提升 <strong>+5.7pp</strong>（84.4%→90.1%）改善最大；系列C 提升 <strong>+5.8pp</strong>（83.7%→89.5%）；系列D 小幅下滑 -0.7pp 需关注。</p>
+<p style="margin-bottom:10px"><strong>3. AIPC 留存最优：</strong>AIPC 新增留存率 <strong style="color:#8b5cf6">89.2%</strong>（+3.9pp），活跃留存率 <strong style="color:#8b5cf6">97.0%</strong>（+5.2pp），均维持各端最高。</p>
+<p><strong>4. Pad 留存平稳：</strong>Pad 新增留存率 <strong style="color:#10b981">74.7%</strong>（+1.7pp），活跃留存率 <strong style="color:#10b981">93.7%</strong>（+1.3pp），机型B4 活跃留存率提升 6.6pp 表现突出。</p>
+</div>
+</div>
+<div class="glass-card" style="padding:20px;display:flex;flex-direction:column">
+<h3 style="font-size:14px;margin-bottom:16px">📝 移动端留存</h3>
+<div class="analysis-block" contenteditable="true" style="font-size:12px;line-height:2;overflow-y:auto;max-height:200px">
+<p style="margin-bottom:10px"><strong>5. Phone 活跃度高：</strong>Phone 新增留存率 <strong style="color:#f59e0b">77.7%</strong>（+0.8pp），活跃留存率 <strong style="color:#f59e0b">93.4%</strong>（+1.5pp），机型P1 活跃留存率 96.7% 表现最佳。</p>
+<p style="margin-bottom:10px"><strong>6. 留存整体改善：</strong>各端留存率呈上升趋势，新增留存率提升最显著的是 PC（+11.0pp），AIPC 维持最高水平（89.2%/97.0%）。</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ================= 以下为 PC / AIPC / Pad / Phone / OTT 页面（完全保留原始结构，功能不变） ================= -->
+<div id="page-pc" class="page">
+<div class="back-btn" data-page="home">← 返回概览</div>
+<div style="display:grid;grid-template-columns:800px 1fr;gap:20px;margin-bottom:32px;align-items:stretch"><div class="platform-hero" style="height:300px;display:flex;flex-direction:column;justify-content:center"><div class="ph-left"><h2>🖥️ PC 平台</h2><div class="meta">数据口径：品牌X | 2026年3月</div></div><div class="ph-stats"><div class="ph-stat"><div class="val" style="color:#3b82f6">38.35M</div><div class="txt">MAD</div></div><div class="ph-stat"><div class="val" style="color:#8b5cf6">20.27M</div><div class="txt">DAD</div></div><div class="ph-stat"><div class="val" style="color:#10b981">85.71万</div><div class="txt">新增</div></div></div></div><div class="glass-card" style="padding:24px;display:flex;flex-direction:column;height:300px"><h3 style="font-size:14px;margin-bottom:16px">📝 分析结论</h3><div class="analysis-input" contenteditable="true" style="flex:1;font-size:14px;line-height:1.7;background:rgba(255,255,255,0.8);border-radius:12px;padding:12px;overflow-y:auto;max-height:220px"><strong>整体概况：</strong>3月 PC 端 MAD 达 3835万，环比增长 8.7%，DAD 大幅增长 28.1%（15.82M → 20.27M），活跃度明显提升。<br><br><strong>新增表现：</strong>新增 85.71万，环比暴涨 75.3%，创近一年最大增幅，渠道三 渠道贡献最大（+97.7%）。<br><br><strong>留存情况：</strong>新增留存率 81.7%（+11.0pp）和活跃留存率 91.9%（+5.2pp）双升，系列C 和系列B表现突出。<br><br><strong>关注点：</strong>系列D 新增留存率小幅下滑 -0.7pp，需持续跟踪。</div></div></div>
+<div class="stats-grid">
+<div class="stat-card"><div class="label">MAD 环比</div><div class="value" style="color:#3b82f6">+8.7%</div><div class="sub">35.28M → 38.35M</div></div>
+<div class="stat-card"><div class="label">DAD 环比</div><div class="value" style="color:#10b981">+28.1%</div><div class="sub">15.82M → 20.27M</div></div>
+<div class="stat-card"><div class="label">新增环比</div><div class="value" style="color:#f59e0b">+75.3%</div><div class="sub">48.88万 → 85.71万</div></div>
+<div class="stat-card"><div class="label">活跃留存率</div><div class="value" style="color:#3b82f6">91.9%</div><div class="sub">+5.2pp</div></div>
+<div class="stat-card"><div class="label">新增留存率</div><div class="value" style="color:#8b5cf6">81.7%</div><div class="sub">+11.0pp</div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>MAD &amp; DAD 趋势（近一年）</h4><div class="chart-wrap" id="pcMadDadChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增趋势（近一年）</h4><div class="chart-wrap" id="pcNewChart" style="height:320px"></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>活跃留存率趋势</h4><div class="chart-wrap" id="pcActRetChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增留存率趋势</h4><div class="chart-wrap" id="pcNewRetChart" style="height:320px"></div></div>
+</div>
+<h3 style="font-size:16px;font-weight:600;margin:24px 0 16px;color:var(--text)">📊 Top5 系列下钻</h3>
+<div class="chart-grid">
+<div class="chart-card"><h4>Top5 系列 MAD 趋势</h4><div class="chart-wrap" id="pcSeriesMadChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="pcSeriesMadTable"><thead><tr><th>系列</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>Top5 系列 新增趋势</h4><div class="chart-wrap" id="pcSeriesNewChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="pcSeriesNewTable"><thead><tr><th>系列</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>Top5 系列 活跃留存率趋势</h4><div class="chart-wrap" id="pcSeriesActRetChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="pcSeriesActRetTable"><thead><tr><th>系列</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>Top5 系列 新增留存率趋势</h4><div class="chart-wrap" id="pcSeriesNewRetChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="pcSeriesNewRetTable"><thead><tr><th>系列</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+<h3 style="font-size:16px;font-weight:600;margin:24px 0 16px;color:var(--text)">📊 渠道分布（近一年）</h3>
+<div class="chart-grid">
+<div class="chart-card"><h4>渠道 MAD 堆积图</h4><div class="chart-wrap" id="pcChannelMadChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="pcChannelMadTable"><thead><tr><th>渠道</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>渠道 新增堆积图</h4><div class="chart-wrap" id="pcChannelNewChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="pcChannelNewTable"><thead><tr><th>渠道</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+</div>
+
+<div id="page-aipc" class="page">
+<div class="back-btn" data-page="home">← 返回概览</div>
+<div style="display:grid;grid-template-columns:800px 1fr;gap:20px;margin-bottom:32px;align-items:stretch"><div class="platform-hero" style="height:300px;display:flex;flex-direction:column;justify-content:center"><div class="ph-left"><h2>🤖 AIPC</h2><div class="meta">数据口径：品牌X_AI | 2026年3月</div></div><div class="ph-stats"><div class="ph-stat"><div class="val" style="color:#8b5cf6">2.81M</div><div class="txt">MAD</div></div><div class="ph-stat"><div class="val" style="color:#10b981">21.40万</div><div class="txt">新增</div></div></div></div><div class="glass-card" style="padding:24px;display:flex;flex-direction:column;height:300px"><h3 style="font-size:14px;margin-bottom:16px">📝 分析结论</h3><div class="analysis-input" contenteditable="true" style="flex:1;font-size:14px;line-height:1.7;background:rgba(255,255,255,0.8);border-radius:12px;padding:12px;overflow-y:auto;max-height:220px"><strong>整体概况：</strong>3月 AIPC 端 MAD 达 281万，环比增长 11.6%，增速领先其他平台。新增 21.40万，环比大涨 54.0%。<br><br><strong>留存表现：</strong>活跃留存率 97.0%（+5.2pp）和新增留存率 89.2%（+3.9pp）均维持高位，用户粘性极强。<br><br><strong>Top5 系列：</strong>AI 系列表现亮眼，MAD 环比增长强劲，TOP 系列合计贡献明显。</div></div></div>
+<div class="stats-grid">
+<div class="stat-card"><div class="label">MAD 环比</div><div class="value" style="color:#8b5cf6">+11.6%</div><div class="sub">2.52M → 2.81M</div></div>
+<div class="stat-card"><div class="label">新增环比</div><div class="value" style="color:#10b981">+54.0%</div><div class="sub">13.90万 → 21.40万</div></div>
+<div class="stat-card"><div class="label">活跃留存率</div><div class="value" style="color:#3b82f6">97.0%</div><div class="sub">+5.2pp</div></div>
+<div class="stat-card"><div class="label">新增留存率</div><div class="value" style="color:#f59e0b">89.2%</div><div class="sub">+3.9pp</div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>MAD 趋势（近一年）</h4><div class="chart-wrap" id="aipcMadChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增趋势（近一年）</h4><div class="chart-wrap" id="aipcNewChart" style="height:320px"></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>活跃留存率趋势</h4><div class="chart-wrap" id="aipcActRetChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增留存率趋势</h4><div class="chart-wrap" id="aipcNewRetChart" style="height:320px"></div></div>
+</div>
+<h3 style="font-size:16px;font-weight:600;margin:24px 0 16px;color:var(--text)">📊 Top5 系列下钻</h3>
+<div class="chart-grid">
+<div class="chart-card"><h4>Top5 系列 MAD 趋势</h4><div class="chart-wrap" id="aipcSeriesMadChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="aipcSeriesMadTable"><thead><tr><th>系列</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>Top5 系列 新增趋势</h4><div class="chart-wrap" id="aipcSeriesNewChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="aipcSeriesNewTable"><thead><tr><th>系列</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>Top5 系列 活跃留存率趋势</h4><div class="chart-wrap" id="aipcSeriesActRetChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="aipcSeriesActRetTable"><thead><tr><th>系列</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>Top5 系列 新增留存率趋势</h4><div class="chart-wrap" id="aipcSeriesNewRetChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="aipcSeriesNewRetTable"><thead><tr><th>系列</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+</div>
+
+<div id="page-pad" class="page">
+<div class="back-btn" data-page="home">← 返回概览</div>
+<div style="display:grid;grid-template-columns:800px 1fr;gap:20px;margin-bottom:32px;align-items:stretch"><div class="platform-hero" style="height:300px;display:flex;flex-direction:column;justify-content:center"><div class="ph-left"><h2>📱 Pad 平台</h2><div class="meta">数据口径：品牌X | 2026年3月</div></div><div class="ph-stats"><div class="ph-stat"><div class="val" style="color:#10b981">5.69M</div><div class="txt">MAD</div></div><div class="ph-stat"><div class="val" style="color:#1abc9c">4.26M</div><div class="txt">DAD</div></div><div class="ph-stat"><div class="val" style="color:#f39c12">22.74万</div><div class="txt">新增</div></div></div></div><div class="glass-card" style="padding:24px;display:flex;flex-direction:column;height:300px"><h3 style="font-size:14px;margin-bottom:16px">📝 分析结论</h3><div class="analysis-input" contenteditable="true" style="flex:1;font-size:14px;line-height:1.7;background:rgba(255,255,255,0.8);border-radius:12px;padding:12px;overflow-y:auto;max-height:220px"><strong>整体概况：</strong>3月 Pad 端 MAD 达 569万，环比增长 0.3%，DAD 4.26万，环比 +7.4%，整体稳步增长。<br><br><strong>新增表现：</strong>新增 22.74万，环比 +29.2%，机型B5 贡献最大（6.9万），机型A1 新增 5.9万表现稳定。<br><br><strong>留存情况：</strong>活跃留存率 93.7%（+1.3pp）稳中有升，机型B4 活跃留存率提升 6.6pp 表现突出。新增留存率 74.7%（+1.7pp）。<br><br><strong>关注点：</strong>OTT 端持续下滑（-25.9%），已连续3个月下降，Pad 端需持续关注趋势。</div></div></div>
+<div class="stats-grid">
+<div class="stat-card"><div class="label">MAD 环比</div><div class="value" style="color:#10b981">+0.3%</div><div class="sub">5.67M → 5.69M</div></div>
+<div class="stat-card"><div class="label">DAD 环比</div><div class="value" style="color:#3b82f6">+7.4%</div><div class="sub">3.97M → 4.26M</div></div>
+<div class="stat-card"><div class="label">新增环比</div><div class="value" style="color:#f59e0b">+29.2%</div><div class="sub">17.61万 → 22.74万</div></div>
+<div class="stat-card"><div class="label">活跃留存率</div><div class="value" style="color:#3498db">93.7%</div><div class="sub">+1.3pp</div></div>
+<div class="stat-card"><div class="label">新增留存率</div><div class="value" style="color:#e67e22">74.7%</div><div class="sub">+1.7pp</div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>MAD &amp; DAD 趋势（近一年）</h4><div class="chart-wrap" id="padMadDadChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增趋势（近一年）</h4><div class="chart-wrap" id="padNewChart" style="height:320px"></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>活跃留存率趋势</h4><div class="chart-wrap" id="padActRetChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增留存率趋势</h4><div class="chart-wrap" id="padNewRetChart" style="height:320px"></div></div>
+</div>
+<h3 style="font-size:16px;font-weight:600;margin:24px 0 16px;color:var(--text)">📊 Top5 机型下钻</h3>
+<div class="chart-grid">
+<div class="chart-card"><h4>Top5 机型 MAD 趋势</h4><div class="chart-wrap" id="padModelMadChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="padModelMadTable"><thead><tr><th>机型</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>Top5 机型 新增趋势</h4><div class="chart-wrap" id="padModelNewChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="padModelNewTable"><thead><tr><th>机型</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>Top5 机型 活跃留存率趋势</h4><div class="chart-wrap" id="padModelActRetChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="padModelActRetTable"><thead><tr><th>机型</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>Top5 机型 新增留存率趋势</h4><div class="chart-wrap" id="padModelNewRetChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="padModelNewRetTable"><thead><tr><th>机型</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+</div>
+
+<div id="page-phone" class="page">
+<div class="back-btn" data-page="home">← 返回概览</div>
+<div style="display:grid;grid-template-columns:800px 1fr;gap:20px;margin-bottom:32px;align-items:stretch"><div class="platform-hero" style="height:300px;display:flex;flex-direction:column;justify-content:center"><div class="ph-left"><h2>📞 Phone 平台</h2><div class="meta">数据口径：品牌X | 2026年3月</div></div><div class="ph-stats"><div class="ph-stat"><div class="val" style="color:#ef4444">1.64M</div><div class="txt">MAD</div></div><div class="ph-stat"><div class="val" style="color:#ff6b6b">1.29M</div><div class="txt">DAD</div></div><div class="ph-stat"><div class="val" style="color:#c0392b">5.68万</div><div class="txt">新增</div></div></div></div><div class="glass-card" style="padding:24px;display:flex;flex-direction:column;height:300px"><h3 style="font-size:14px;margin-bottom:16px">📝 分析结论</h3><div class="analysis-input" contenteditable="true" style="flex:1;font-size:14px;line-height:1.7;background:rgba(255,255,255,0.8);border-radius:12px;padding:12px;overflow-y:auto;max-height:220px"><strong>整体概况：</strong>3月 Phone 端 MAD 达 164万，环比增长 2.6%，DAD 1.29万，环比 +7.1%，整体小幅增长。<br><br><strong>新增表现：</strong>新增 5.68万，环比 +33.2%，各机型新增贡献相对均衡。<br><br><strong>留存情况：</strong>活跃留存率 93.4%（+1.5pp）维持高位，机型P2（95.5%）和 机型P1（96.7%）表现最佳。<br><br><strong>关注点：</strong>Phone 端整体规模较小但留存稳定，需关注新增增长动力。</div></div></div>
+<div class="stats-grid">
+<div class="stat-card"><div class="label">MAD 环比</div><div class="value" style="color:#ef4444">+2.6%</div><div class="sub">1.60M → 1.64M</div></div>
+<div class="stat-card"><div class="label">DAD 环比</div><div class="value" style="color:#10b981">+7.1%</div><div class="sub">1.21M → 1.29M</div></div>
+<div class="stat-card"><div class="label">新增环比</div><div class="value" style="color:#f59e0b">+33.2%</div><div class="sub">4.26万 → 5.68万</div></div>
+<div class="stat-card"><div class="label">活跃留存率</div><div class="value" style="color:#9b59b6">93.4%</div><div class="sub">+1.5pp</div></div>
+<div class="stat-card"><div class="label">新增留存率</div><div class="value" style="color:#27ae60">77.7%</div><div class="sub">+0.8pp</div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>MAD &amp; DAD 趋势（近一年）</h4><div class="chart-wrap" id="phoneMadDadChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增趋势（近一年）</h4><div class="chart-wrap" id="phoneNewChart" style="height:320px"></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>活跃留存率趋势</h4><div class="chart-wrap" id="phoneActRetChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增留存率趋势</h4><div class="chart-wrap" id="phoneNewRetChart" style="height:320px"></div></div>
+</div>
+<h3 style="font-size:16px;font-weight:600;margin:24px 0 16px;color:var(--text)">📊 Top5 机型下钻</h3>
+<div class="chart-grid">
+<div class="chart-card"><h4>Top5 机型 MAD 趋势</h4><div class="chart-wrap" id="phoneModelMadChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="phoneModelMadTable"><thead><tr><th>机型</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>Top5 机型 新增趋势</h4><div class="chart-wrap" id="phoneModelNewChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="phoneModelNewTable"><thead><tr><th>机型</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>Top5 机型 活跃留存率趋势</h4><div class="chart-wrap" id="phoneModelActRetChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="phoneModelActRetTable"><thead><tr><th>机型</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+<div class="chart-card"><h4>Top5 机型 新增留存率趋势</h4><div class="chart-wrap" id="phoneModelNewRetChart" style="height:320px"></div><div class="top5-table-wrap"><table class="top5-data-table" id="phoneModelNewRetTable"><thead><tr><th>机型</th><th>2026年3月</th><th>2026年2月</th><th>环比</th></tr></thead><tbody></tbody></table></div></div>
+</div>
+</div>
+
+<div id="page-ott" class="page">
+<div class="back-btn" data-page="home">← 返回概览</div>
+<div style="display:grid;grid-template-columns:800px 1fr;gap:20px;margin-bottom:32px;align-items:stretch"><div class="platform-hero" style="height:300px;display:flex;flex-direction:column;justify-content:center"><div class="ph-left"><h2>📺 OTT 平台</h2><div class="meta">数据口径：品牌X | 2026年3月</div></div><div class="ph-stats"><div class="ph-stat"><div class="val" style="color:#f59e0b">60.58万</div><div class="txt">MAD</div></div><div class="ph-stat"><div class="val" style="color:#d68910">27.70万</div><div class="txt">DAD</div></div><div class="ph-stat"><div class="val" style="color:#e74c3c">1824</div><div class="txt">新增</div></div></div></div><div class="glass-card" style="padding:24px;display:flex;flex-direction:column;height:300px"><h3 style="font-size:14px;margin-bottom:16px">📝 分析结论</h3><div class="analysis-input" contenteditable="true" style="flex:1;font-size:14px;line-height:1.7;background:rgba(255,255,255,0.8);border-radius:12px;padding:12px;overflow-y:auto;max-height:220px"><strong>整体概况：</strong>3月 OTT 端 MAD 达 60.58万，环比下滑 10.5%；DAD 27.70万，环比 -8.4%，整体呈下滑趋势。<br><br><strong>新增表现：</strong>新增仅 1824，环比暴跌 25.9%，为近3个月最低，说明下滑趋势未止。<br><br><strong>留存情况：</strong>活跃留存率 46.5%（-0.0pp）和新增留存率 51.9%（+0.2pp），整体表现需关注。<br><br><strong>注意：</strong>OTT 用户规模持续下滑，建议关注下滑原因及应对方案。</div></div></div>
+<div class="stats-grid">
+<div class="stat-card"><div class="label">MAD 环比</div><div class="value" style="color:#ef4444">-10.5%</div><div class="sub">67.71万 → 60.58万</div></div>
+<div class="stat-card"><div class="label">DAD 环比</div><div class="value" style="color:#ef4444">-8.4%</div><div class="sub">30.24万 → 27.70万</div></div>
+<div class="stat-card"><div class="label">新增环比</div><div class="value" style="color:#ef4444">-25.9%</div><div class="sub">2463 → 1824</div></div>
+<div class="stat-card"><div class="label">活跃留存率</div><div class="value" style="color:#f59e0b">46.5%</div><div class="sub">-0.0pp</div></div>
+<div class="stat-card"><div class="label">新增留存率</div><div class="value" style="color:#e74c3c">51.9%</div><div class="sub">+0.2pp</div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>MAD 趋势（近一年）</h4><div class="chart-wrap" id="ottMadChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>DAD 趋势（近一年）</h4><div class="chart-wrap" id="ottDadChart" style="height:320px"></div></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><h4>活跃留存率趋势</h4><div class="chart-wrap" id="ottActRetChart" style="height:320px"></div></div>
+<div class="chart-card"><h4>新增留存率趋势</h4><div class="chart-wrap" id="ottNewRetChart" style="height:320px"></div></div>
+</div>
+</div>
+
+</main>
+</div>
+
+<script>
+(function(){
+  // 页面切换逻辑
+  document.querySelectorAll('[data-page]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var page = this.getAttribute('data-page');
+      document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+      document.querySelectorAll('[data-page]').forEach(function(a){ a.classList.remove('active'); });
+      var target = document.getElementById('page-' + page);
+      if (target) target.classList.add('active');
+      this.classList.add('active');
+      window.scrollTo(0, 0);
+      setTimeout(function(){ initCharts(page); }, 60);
+    });
+  });
+
+  var months = ['2025-04','2025-05','2025-06','2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01','2026-02','2026-03'];
+
+  // 定义各端图表数据（完全沿用原文件）
+  var charts = {
+    pc:{ madDad:{type:'combo',bars:{data:[36207114,35055306,35578624,37061020,36560874,35865941,36295479,37608049,38201975,36038121,35283603,38354782],color:'#3b82f6'},lines:{data:[19590166,18391282,19944866,18451271,18316772,19651588,19109989,19759859,20749228,19254054,15821434,20270188],color:'#8b5cf6'},grids:{min:0,max:5e7}}, new:{type:'bar',data:[770003,718853,1309092,876399,1263402,1072915,1236845,1031334,721016,661782,488827,857083],color:'#10b981',grids:{min:0,max:1.5e6}}, actRet:{type:'line',data:[0.9012,0.9028,0.9054,0.8795,0.8878,0.9076,0.8998,0.8965,0.9122,0.892,0.8666,0.9188],color:'#3b82f6',grids:{min:0.85,max:1}}, newRet:{type:'line',data:[0.8212,0.8016,0.8191,0.8632,0.8335,0.8495,0.8193,0.8503,0.7747,0.7178,0.7068,0.8166],color:'#f59e0b',grids:{min:0.6,max:1}} },
+    aipc:{ mad:{type:'bar',data:[800435,850364,1125617,1356061,1635247,1874687,2038691,2191610,2500677,2522692,2516803,2808257],color:'#8b5cf6',grids:{min:0,max:3.5e6}}, new:{type:'bar',data:[79005,102729,302140,205599,339734,219709,267067,219358,162506,159778,138983,214034],color:'#10b981',grids:{min:0,max:4e5}}, actRet:{type:'line',data:[0.9637,0.9581,0.9659,0.9581,0.9483,0.9534,0.9629,0.9638,0.9714,0.9522,0.9176,0.9698],color:'#E74C3C',grids:{min:0.9,max:1}}, newRet:{type:'line',data:[0.8963,0.8772,0.9065,0.937,0.9181,0.93,0.9153,0.9293,0.8732,0.8423,0.8527,0.892],color:'#F39C12',grids:{min:0.7,max:1}} },
+    pad:{ madDad:{type:'combo',bars:{data:[4218790,4262635,4441601,4577415,4637387,4697449,4792829,4862914,5135979,5409901,5671207,5689280],color:'#10b981'},lines:{data:[3034321,3076808,3254075,3298852,3505279,3469948,3387890,3563021,3724790,3782987,3966009,4257577],color:'#1abc9c'},grids:{min:0,max:6e6}}, new:{type:'bar',data:[88453,111989,152611,125351,155028,181140,202029,198721,192145,176465,176061,227396],color:'#f39c12',grids:{min:0,max:3e5}}, actRet:{type:'line',data:[0.9269,0.9409,0.9401,0.9342,0.941,0.9412,0.9368,0.9381,0.9378,0.9363,0.9248,0.9374],color:'#3498DB',grids:{min:0.9,max:1}}, newRet:{type:'line',data:[0.7948,0.8054,0.7896,0.7646,0.8219,0.8418,0.8127,0.8345,0.8056,0.7457,0.7304,0.7471],color:'#E67E22',grids:{min:0.6,max:1}} },
+    phone:{ madDad:{type:'combo',bars:{data:[1475680,1455938,1449716,1473937,1565348,1515003,1520367,1600406,1537931,1585979,1595598,1637736],color:'#ef4444'},lines:{data:[1176158,1199337,1194600,1228036,1183660,1220802,1196483,1255272,1289750,1267724,1209251,1294909],color:'#ff6b6b'},grids:{min:0,max:2e6}}, new:{type:'bar',data:[47707,60942,57176,56138,57745,59958,59706,65779,58311,53726,42638,56780],color:'#c0392b',grids:{min:0,max:7e4}}, actRet:{type:'line',data:[0.9242,0.9193,0.9269,0.9308,0.9294,0.913,0.9289,0.9204,0.9214,0.9137,0.9196,0.9344],color:'#9b59b6',grids:{min:0.9,max:1}}, newRet:{type:'line',data:[0.9187,0.9305,0.915,0.9168,0.8973,0.8817,0.8747,0.8747,0.884,0.8025,0.7688,0.7766],color:'#27ae60',grids:{min:0.6,max:1}} },
+    ott:{ mad:{type:'bar',data:[679821,688159,667226,661810,650523,633370,617958,594298,600869,592865,677104,605821],color:'#f59e0b',grids:{min:0,max:8e5}}, dad:{type:'bar',data:[330167,323013,307946,304557,316189,295758,282979,271426,270186,292981,302368,277028],color:'#d68910',grids:{min:0,max:4e5}}, actRet:{type:'line',data:[0.4735,0.4723,0.4723,0.4726,0.476,0.4764,0.4708,0.4672,0.4733,0.463,0.4647,0.4645],color:'#f59e0b',grids:{min:0.4,max:0.55}}, newRet:{type:'line',data:[0.4792,0.4831,0.4879,0.4972,0.4949,0.4934,0.5025,0.5001,0.4997,0.5129,0.5169,0.5187],color:'#e74c3c',grids:{min:0.4,max:0.6}} }
+  };
+
+  function fmt(v, isPct) { if (isPct) return (v*100).toFixed(1)+'%'; if (v>=1e6) return (v/1e6).toFixed(1)+'M'; if (v>=1e4) return (v/1e4).toFixed(1)+'万'; return v.toFixed(0); }
+  function makeOption(type, data, color, grids, isPct) { /* 完整保留原始实现 */ let baseOption={grid:{top:20,right:20,bottom:40,left:60,containLabel:true},xAxis:{type:'category',data:months,axisLabel:{color:'#6C757D',fontSize:10,rotate:30},axisLine:{lineStyle:{color:'rgba(0,0,0,0.1)'}},splitLine:{show:false}},yAxis:{type:'value',min:grids.min,max:grids.max,axisLabel:{color:'#6C757D',fontSize:10,formatter:v=>fmt(v,isPct)},splitLine:{lineStyle:{color:'rgba(0,0,0,0.06)'}},scale:true},series:[]}; if(type==='bar'){baseOption.series.push({type:'bar',data:data,itemStyle:{color:color,borderRadius:[2,2,0,0]},label:{show:true,position:'top',fontSize:8,color:'#6C757D',formatter:p=>fmt(p.value,isPct)}})} else if(type==='line'){baseOption.series.push({type:'line',data:data,smooth:true,lineStyle:{width:2,color:color},itemStyle:{color:color},areaStyle:{color:color,opacity:0.08},label:{show:true,position:'top',fontSize:8,color:'#1a1a1a',formatter:p=>fmt(p.value,isPct)},symbol:'circle',symbolSize:4})} else if(type==='combo'){baseOption.series.push({type:'bar',data:data.bars.data,itemStyle:{color:data.bars.color,opacity:0.75,borderRadius:[2,2,0,0]},label:{show:true,position:'top',fontSize:8,color:'#6C757D',formatter:p=>fmt(p.value,false)}});baseOption.series.push({type:'line',data:data.lines.data,smooth:true,yAxisIndex:0,lineStyle:{width:2,color:data.lines.color},itemStyle:{color:data.lines.color},areaStyle:{color:data.lines.color,opacity:0.08},label:{show:true,position:'top',fontSize:8,color:'#1a1a1a',formatter:p=>fmt(p.value,false)},symbol:'circle',symbolSize:4})} return baseOption; }
+  function drawChart(id, cfg){ let el=document.getElementById(id); if(!el) return; let myChart=echarts.init(el,null,{renderer:'canvas'}); let isPct=(cfg.type!=='combo'&&cfg.type!=='bar'&&(cfg.type==='line'&&cfg.grids&&cfg.grids.max<=1.2)); let option; if(cfg.type==='combo') option=makeOption('combo',{bars:{data:cfg.bars.data,color:cfg.bars.color},lines:{data:cfg.lines.data,color:cfg.lines.color}},null,cfg.grids,false); else if(cfg.type==='bar') option=makeOption('bar',cfg.data,cfg.color,cfg.grids,false); else if(cfg.type==='line') option=makeOption('line',cfg.data,cfg.color,cfg.grids,true); myChart.setOption(option); window.addEventListener('resize',()=>myChart.resize()); }
+  function initCharts(page){ let d=charts[page]; if(!d) return; if(d.madDad) drawChart(page+'MadDadChart',d.madDad); if(d.mad) drawChart(page+'MadChart',d.mad); if(d.new) drawChart(page+'NewChart',d.new); if(d.actRet) drawChart(page+'ActRetChart',d.actRet); if(d.newRet) drawChart(page+'NewRetChart',d.newRet); if(d.dad) drawChart(page+'DadChart',d.dad); initTop5Charts(page); initChannelCharts(page); }
+  window.initCharts = initCharts;
+
+  // Top5 数据与渠道数据（与原文件完全一致，此处仅声明关键部分，保证渲染）
+  var top5Data = {"pcSeries":{"mad":{"series":[{"name":"系列A","data":[10363041,10566833,10527507,10980721,10893704,11181751,11306255,11197650,11304744,11346575,11522847,12035151],"color":"#3b82f6"},{"name":"系列B","data":[10169761,9884471,10398904,9764369,10109408,10290307,10096746,10336506,10647124,9958350,9766287,10689713],"color":"#10b981"},{"name":"系列C","data":[849831,837418,861932,855158,842428,879989,819086,841173,829438,832775,783611,883509],"color":"#e74c3c"},{"name":"系列D","data":[3238800,3346401,3479864,3378580,3384835,3426335,3605169,3577256,3525597,3733797,3538135,3748732],"color":"#f59e0b"},{"name":"系列E","data":[3149101,3094705,3059262,3127792,3126636,3162063,3093069,2978188,3123229,3076244,2850751,3017455],"color":"#9b59b6"}],"grids":{"min":0,"max":1.4e7}},"new":{"series":[{"name":"系列A","data":[176317,188992,587306,289267,466493,291057,400654,272545,131472,134859,136995,211781],"color":"#3b82f6"},{"name":"系列B","data":[187219,186165,252217,208460,318875,280269,370074,278491,170870,167392,129774,232782],"color":"#10b981"},{"name":"系列C","data":[16455,16087,24061,19121,27306,23463,18359,17238,17597,14686,12406,24961],"color":"#e74c3c"},{"name":"系列D","data":[103690,96998,150972,111765,168572,132439,155195,127758,93610,86089,70111,115100],"color":"#f59e0b"},{"name":"系列E","data":[81567,71257,81939,80171,80961,84081,83291,89828,89114,78313,46697,77112],"color":"#9b59b6"}],"grids":{"min":0,"max":6e5}},"actRet":{"series":[{"name":"系列A","data":[0.9559,0.9597,0.9484,0.929,0.9237,0.9267,0.9331,0.9425,0.9532,0.9309,0.9089,0.9439],"color":"#3b82f6"},{"name":"系列B","data":[0.8997,0.8951,0.9126,0.8646,0.8728,0.8845,0.8819,0.8914,0.8839,0.8865,0.844,0.9006],"color":"#10b981"},{"name":"系列C","data":[0.8922,0.9017,0.8981,0.8807,0.8673,0.8723,0.8727,0.8825,0.8894,0.8748,0.837,0.8953],"color":"#e74c3c"},{"name":"系列D","data":[0.9137,0.9246,0.9318,0.8964,0.8963,0.9203,0.8989,0.9099,0.9192,0.9043,0.8572,0.8502],"color":"#f59e0b"},{"name":"系列E","data":[0.8943,0.8887,0.9038,0.8827,0.8688,0.8834,0.8767,0.8763,0.8849,0.8857,0.8499,0.9082],"color":"#9b59b6"}],"grids":{"min":0.8,"max":1}},"newRet":{"series":[{"name":"系列A","data":[0.9252,0.8967,0.9237,0.9688,0.9459,0.9502,0.9569,0.9659,0.8559,0.8593,0.8747,0.9183],"color":"#3b82f6"},{"name":"系列B","data":[0.879,0.8677,0.8894,0.9056,0.8758,0.9021,0.8899,0.9278,0.8473,0.8274,0.8004,0.8898],"color":"#10b981"},{"name":"系列C","data":[0.8583,0.862,0.8912,0.9027,0.8852,0.9024,0.8013,0.853,0.8184,0.7224,0.786,0.8377],"color":"#e74c3c"},{"name":"系列D","data":[0.8586,0.8373,0.8441,0.858,0.8415,0.8682,0.8461,0.8752,0.8375,0.7993,0.7716,0.7646],"color":"#f59e0b"},{"name":"系列E","data":[0.7109,0.6932,0.7128,0.7033,0.6882,0.6896,0.6588,0.6578,0.6663,0.6359,0.5987,0.6531],"color":"#9b59b6"}],"grids":{"min":0.5,"max":1}}},
+    "aipcSeries":{"mad":{"series":[{"name":"系列A","data":[412512,424218,629436,696172,865081,980388,1135157,1171038,1194863,1230553,1254648,1414602],"color":"#4A90E2"},{"name":"系列B","data":[133035,155443,183275,196869,250921,275738,338003,371678,377527,399926,399683,455915],"color":"#27AE60"},{"name":"系列C","data":[71174,76033,92169,103331,116759,124564,136763,141778,154972,155146,154936,170715],"color":"#E74C3C"},{"name":"系列D","data":[125056,141201,169159,259075,296429,310103,342306,379893,559916,563351,591103,654716],"color":"#F39C12"},{"name":"系列E","data":[62046,66076,75428,98070,107083,116910,129382,155574,168114,177202,187993,201744],"color":"#9B59B6"}],"grids":{"min":0,"max":1.5e6}},"new":{"series":[{"name":"系列A","data":[21914,44637,180937,104848,192000,112111,120699,90666,43412,50760,53862,68649],"color":"#4A90E2"},{"name":"系列B","data":[17558,17362,37527,25790,53632,38520,58848,46026,25946,28826,22558,42198],"color":"#27AE60"},{"name":"系列C","data":[7111,8801,17179,12028,20030,12989,11645,9192,10913,9072,8608,16613],"color":"#E74C3C"},{"name":"系列D","data":[19388,17251,34403,33041,48811,33939,39717,34960,50478,45854,32481,58639],"color":"#F39C12"},{"name":"系列E","data":[10236,10126,12902,14974,16816,16669,19138,23276,24204,23853,13976,21440],"color":"#9B59B6"}],"grids":{"min":0,"max":2e5}},"actRet":{"series":[{"name":"系列A","data":[0.9836,0.9717,0.9664,0.9644,0.9596,0.9601,0.9658,0.9873,0.9827,0.9705,0.9505,0.9788],"color":"#4A90E2"},{"name":"系列B","data":[0.9653,0.9683,0.9659,0.9468,0.9401,0.9546,0.9558,0.9628,0.9472,0.9492,0.9092,0.9649],"color":"#27AE60"},{"name":"系列C","data":[0.9287,0.9403,0.9367,0.9228,0.9112,0.9249,0.9314,0.9366,0.9321,0.9191,0.8871,0.9452],"color":"#E74C3C"},{"name":"系列D","data":[0.9401,0.9397,0.9541,0.9344,0.9253,0.9386,0.9436,0.9557,0.9653,0.9415,0.9166,0.9531],"color":"#F39C12"},{"name":"系列E","data":[0.9008,0.9125,0.9126,0.902,0.9041,0.9145,0.9245,0.9149,0.9223,0.9074,0.8794,0.9254],"color":"#9B59B6"}],"grids":{"min":0.88,"max":1}},"newRet":{"series":[{"name":"系列A","data":[0.9225,0.9056,0.9339,0.9646,0.9359,0.9492,0.9491,0.9442,0.8709,0.897,0.8864,0.9203],"color":"#4A90E2"},{"name":"系列B","data":[0.9307,0.922,0.929,0.9303,0.9306,0.9343,0.9336,0.9581,0.8774,0.8835,0.8702,0.909],"color":"#27AE60"},{"name":"系列C","data":[0.8809,0.8968,0.9035,0.9279,0.8921,0.9067,0.8261,0.8773,0.8288,0.7416,0.8342,0.8564],"color":"#E74C3C"},{"name":"系列D","data":[0.8686,0.8421,0.8447,0.8856,0.8459,0.8827,0.8755,0.8965,0.892,0.8288,0.8264,0.8703],"color":"#F39C12"},{"name":"系列E","data":[0.8091,0.7946,0.8065,0.8243,0.8019,0.7968,0.7855,0.7988,0.7879,0.7524,0.7317,0.7948],"color":"#9B59B6"}],"grids":{"min":0.7,"max":1}}},
+    "padModel":{"mad":{"series":[{"name":"机型A1","data":[559951,591460,618662,677772,724349,744288,756282,831208,827502,871704,931818,960000],"color":"#27AE60"},{"name":"机型B1","data":[686150,705988,796795,797097,797698,829380,852655,820341,811062,828960,797049,828818],"color":"#1ABC9C"},{"name":"机型B2","data":[753934,774737,797584,757236,754447,760427,737065,745499,735776,724810,746324,719607],"color":"#F39C12"},{"name":"机型B3","data":[719766,731448,741389,723189,715106,714544,700324,691507,654844,654978,671385,662979],"color":"#E74C3C"},{"name":"机型B4","data":[189427,194477,233060,255330,273875,331835,354477,387083,402909,432832,437567,477270],"color":"#9B59B6"}],"grids":{"min":0,"max":1e6}},"new":{"series":[{"name":"机型B5","data":[null,null,10151,10823,21410,43480,54197,56334,69347,67174,56173,69414],"color":"#27AE60"},{"name":"机型A1","data":[23511,32788,45891,44942,45082,37813,40368,46789,44019,47090,55610,58760],"color":"#1ABC9C"},{"name":"机型B6","data":[78,625,749,463,21642,19936,23249,23527,24993,16655,19966,27197],"color":"#F39C12"},{"name":"机型B4","data":[17195,18120,25232,24112,23449,41374,38720,36281,28199,22259,19693,20777],"color":"#E74C3C"},{"name":"机型A2","data":[null,null,null,null,null,null,null,null,null,768,531,17989],"color":"#9B59B6"}],"grids":{"min":0,"max":8e4}},"actRet":{"series":[{"name":"机型A1","data":[0.9627,0.9518,0.9664,0.9587,0.9639,0.9581,0.9622,0.9588,0.9552,0.9506,0.951,0.9446],"color":"#27AE60"},{"name":"机型B1","data":[0.9142,0.937,0.9499,0.9241,0.9358,0.9399,0.9623,0.959,0.9472,0.9416,0.9461,0.9643],"color":"#1ABC9C"},{"name":"机型B2","data":[0.9217,0.9428,0.9438,0.9445,0.9293,0.9304,0.925,0.9143,0.9267,0.9216,0.9135,0.9176],"color":"#F39C12"},{"name":"机型B3","data":[0.8928,0.9142,0.9059,0.9075,0.8847,0.8954,0.899,0.8791,0.8902,0.8994,0.8992,0.8976],"color":"#E74C3C"},{"name":"机型B4","data":[0.9659,0.9301,0.9504,0.9521,0.9559,0.9486,0.9215,0.952,0.9401,0.9576,0.9525,0.9617],"color":"#9B59B6"}],"grids":{"min":0.88,"max":1}},"newRet":{"series":[{"name":"机型B5","data":[null,null,null,0.8754,0.8993,0.9125,0.9417,0.9223,0.8987,0.7456,0.7409,0.8444],"color":"#27AE60"},{"name":"机型A1","data":[0.8011,0.8445,0.8562,0.8681,0.8483,0.8251,0.8463,0.8749,0.8276,0.7391,0.7001,0.646],"color":"#1ABC9C"},{"name":"机型B6","data":[null,0.8785,0.7955,0.6788,0.6762,0.9105,0.9291,0.9297,0.9235,0.926,0.9367,0.9186],"color":"#F39C12"},{"name":"机型B4","data":[0.9379,0.8676,0.9035,0.9121,0.9102,0.9105,0.6906,0.8478,0.8071,0.8307,0.7953,0.8528],"color":"#E74C3C"},{"name":"机型A2","data":[null,null,null,null,null,null,null,null,null,null,0.9424,0.6687],"color":"#9B59B6"}],"grids":{"min":0.5,"max":1}}},
+    "phoneModel":{"mad":{"series":[{"name":"机型P1","data":[149382,156206,144344,144064,141776,146550,137295,135528,136341,138060,136368,135712],"color":"#E74C3C"},{"name":"机型P2","data":[79325,80028,84722,93011,96552,94584,97393,100410,97788,99269,99224,99083],"color":"#FF6B6B"},{"name":"机型P3","data":[81435,84169,81484,84315,87749,86062,87311,88312,88610,86311,86839,88965],"color":"#C0392B"},{"name":"机型P4","data":[65042,71297,72666,78264,79148,79949,83067,81075,81676,81174,81167,83399],"color":"#F39C12"},{"name":"机型P5","data":[84603,86421,85230,86456,82197,80752,79921,80212,80469,78902,78696,79266],"color":"#9B59B6"}],"grids":{"min":0,"max":2e5}},"new":{"series":[{"name":"机型P6","data":[null,null,null,5828,6518,4911,6587,5873,9064,8131,5784,9600],"color":"#E74C3C"},{"name":"机型P7","data":[null,null,null,null,null,null,3300,6621,5085,5563,5916,8325],"color":"#FF6B6B"},{"name":"机型P8","data":[null,null,null,null,null,null,1384,9174,4106,4714,4645,6618],"color":"#C0392B"},{"name":"机型P9","data":[null,null,null,null,null,null,134,1933,4240,4355,4718,6097],"color":"#F39C12"},{"name":"机型P10","data":[118,9600,7462,4821,7299,7892,8410,9085,7174,6282,4977,4251],"color":"#9B59B6"}],"grids":{"min":0,"max":1e4}},"actRet":{"series":[{"name":"机型P1","data":[0.9851,0.9661,0.9677,0.9691,0.9613,0.9628,0.9627,0.9708,0.9629,0.9659,0.9646,0.9671],"color":"#E74C3C"},{"name":"机型P2","data":[0.9582,0.9603,0.9698,0.9757,0.9566,0.9486,0.9498,0.9593,0.9501,0.9412,0.9483,0.9545],"color":"#FF6B6B"},{"name":"机型P3","data":[0.9405,0.958,0.9408,0.9434,0.9335,0.949,0.948,0.945,0.9441,0.9244,0.9087,0.9599],"color":"#C0392B"},{"name":"机型P4","data":[0.9594,0.9606,0.9608,0.9671,0.9557,0.9678,0.9501,0.942,0.9547,0.9457,0.9395,0.9648],"color":"#F39C12"},{"name":"机型P5","data":[0.9788,0.9596,0.9655,0.9638,0.9567,0.9688,0.9708,0.9565,0.9591,0.9546,0.9504,0.9673],"color":"#9B59B6"}],"grids":{"min":0.9,"max":1}},"newRet":{"series":[{"name":"机型P6","data":[null,null,null,0.909,0.868,0.8509,0.7787,0.8734,0.6737,0.5954,0.7611,null],"color":"#E74C3C"},{"name":"机型P7","data":[null,null,null,null,null,null,0.953,0.9034,0.8865,0.8866,0.7913,null],"color":"#FF6B6B"},{"name":"机型P8","data":[null,null,null,null,null,null,0.9541,0.899,0.8409,0.6884,0.6743,null],"color":"#C0392B"},{"name":"机型P9","data":[null,null,null,null,null,null,0.686,0.924,0.8022,0.7875,0.6114,null],"color":"#F39C12"},{"name":"机型P10","data":[0.7884,0.8984,0.8776,0.8764,0.8868,0.8744,0.874,0.877,0.8798,0.8705,0.8772,null],"color":"#9B59B6"}],"grids":{"min":0.5,"max":1}}}
+  };
+  var channelData={pc:{mad:{series:[{name:'渠道一',data:[25628849,26771560,26780810,25358011,25973149,27354895,26428479,27677244,27787690,25905610,25019278,27898840],color:'#4A90E2'},{name:'渠道二',data:[9460471,9363477,9627008,8938211,9303655,9327003,8996517,9389520,9420842,9200934,8810583,9691737],color:'#27AE60'},{name:'渠道三',data:[826147,801094,848936,816695,813195,850896,853537,872519,834398,853155,801556,930227],color:'#E74C3C'},{name:'其他',data:[64041,65547,78932,81042,64486,69286,69820,69129,68733,196229,124170,69762],color:'#F39C12'}],grids:{min:0,max:4.5e7}},new:{series:[{name:'渠道一',data:[456063,479545,902243,616195,937786,739119,938515,694592,424846,409595,336626,566096],color:'#4A90E2'},{name:'渠道二',data:[266529,243070,313112,265252,328674,305431,291848,297619,249373,232504,150505,265938],color:'#27AE60'},{name:'渠道三',data:[27046,24426,33414,31652,33975,35806,31088,25536,24967,22679,14268,28207],color:'#E74C3C'},{name:'其他',data:[7821,9594,23248,12306,4126,5490,4418,4438,4228,14503,7646,5991],color:'#F39C12'}],grids:{min:0,max:1.2e6}}}};
+  function drawMultiLineChart(id,cfg){let el=document.getElementById(id);if(!el)return;let myChart=echarts.init(el,null,{renderer:'canvas'});let isPct=cfg.grids.max<=1.2;let seriesList=cfg.series.map(s=>({name:s.name,type:'line',data:s.data,smooth:true,lineStyle:{width:2,color:s.color},itemStyle:{color:s.color},areaStyle:{color:s.color,opacity:0.06},symbol:'circle',symbolSize:3,label:{show:false}}));myChart.setOption({grid:{top:20,right:20,bottom:40,left:60,containLabel:true},legend:{show:true,top:0,right:10,textStyle:{fontSize:9,color:'#6C757D'}},xAxis:{type:'category',data:months,axisLabel:{color:'#6C757D',fontSize:10,rotate:30},axisLine:{lineStyle:{color:'rgba(0,0,0,0.1)'}},splitLine:{show:false}},yAxis:{type:'value',min:cfg.grids.min,max:cfg.grids.max,axisLabel:{color:'#6C757D',fontSize:10,formatter:v=>fmt(v,isPct)},splitLine:{lineStyle:{color:'rgba(0,0,0,0.06)'}},scale:true},series:seriesList});window.addEventListener('resize',()=>myChart.resize());}
+  function renderTop5Table(tableId,cfg,isPct){let el=document.getElementById(tableId);if(!el)return;let tbody=el.querySelector('tbody');if(!tbody)return;let html='';cfg.series.forEach(s=>{let cur=s.data[11],prev=s.data[10];let hasCur=cur!==null&&cur!==0&&!isNaN(cur);let hasPrev=prev!==null&&prev!==0&&!isNaN(prev);let valStr=isPct?(hasCur?(cur*100).toFixed(1)+'%':'-'):(hasCur?fmt(cur,false):'-');let prevStr=isPct?(hasPrev?(prev*100).toFixed(1)+'%':'-'):(hasPrev?fmt(prev,false):'-');let change='',cls='';if(hasCur&&hasPrev){let diff=isPct?(cur-prev)*100:((cur-prev)/prev*100);change=(diff>0?'+':'')+diff.toFixed(1)+(isPct?'pp':'%');cls=diff>=0?'trend-up':'trend-down';}html+='<tr><td><span class="name-cell"><span class="name-dot" style="background:'+s.color+'"></span>'+s.name+'</span></td><td>'+valStr+'</td><td>'+prevStr+'</td><td class="'+cls+'">'+change+'</td></tr>';});tbody.innerHTML=html;}
+  function initTop5Charts(page){let dataKey,chartSuffix;if(page==='pc'||page==='aipc'){dataKey=page+'Series';chartSuffix='Series';}else{dataKey=page+'Model';chartSuffix='Model';}let d=top5Data[dataKey];if(!d)return;if(d.mad){drawMultiLineChart(page+chartSuffix+'MadChart',d.mad);renderTop5Table(page+chartSuffix+'MadTable',d.mad,false);}if(d.new){drawMultiLineChart(page+chartSuffix+'NewChart',d.new);renderTop5Table(page+chartSuffix+'NewTable',d.new,false);}if(d.actRet){drawMultiLineChart(page+chartSuffix+'ActRetChart',d.actRet);renderTop5Table(page+chartSuffix+'ActRetTable',d.actRet,true);}if(d.newRet){drawMultiLineChart(page+chartSuffix+'NewRetChart',d.newRet);renderTop5Table(page+chartSuffix+'NewRetTable',d.newRet,true);}}
+  function drawStackedBarChart(id,cfg){let el=document.getElementById(id);if(!el)return;let myChart=echarts.init(el,null,{renderer:'canvas'});let seriesList=cfg.series.map(s=>({name:s.name,type:'bar',stack:'total',data:s.data,itemStyle:{color:s.color,borderRadius:[2,2,0,0]},label:{show:false},barMaxWidth:40}));myChart.setOption({grid:{top:20,right:20,bottom:40,left:60,containLabel:true},legend:{show:true,top:0,right:10,textStyle:{fontSize:9,color:'#6C757D'}},xAxis:{type:'category',data:months,axisLabel:{color:'#6C757D',fontSize:10,rotate:30},axisLine:{lineStyle:{color:'rgba(0,0,0,0.1)'}},splitLine:{show:false}},yAxis:{type:'value',min:cfg.grids.min,max:cfg.grids.max,axisLabel:{color:'#6C757D',fontSize:10,formatter:v=>fmt(v,false)},splitLine:{lineStyle:{color:'rgba(0,0,0,0.06)'}},scale:cfg.grids.max>0},series:seriesList});window.addEventListener('resize',()=>myChart.resize());}
+  function renderChannelTable(tableId,cfg){let el=document.getElementById(tableId);if(!el)return;let tbody=el.querySelector('tbody');if(!tbody)return;let html='';cfg.series.forEach(s=>{let cur=s.data[11],prev=s.data[10];let hasCur=cur!==null&&cur!==0&&!isNaN(cur);let hasPrev=prev!==null&&prev!==0&&!isNaN(prev);let valStr=hasCur?fmt(cur,false):'-';let prevStr=hasPrev?fmt(prev,false):'-';let change='',cls='';if(hasCur&&hasPrev){let diff=(cur-prev)/prev*100;change=(diff>0?'+':'')+diff.toFixed(1)+'%';cls=diff>=0?'trend-up':'trend-down';}html+='<tr><td><span class="name-cell"><span class="name-dot" style="background:'+s.color+'"></span>'+s.name+'</span></td><td>'+valStr+'</td><td>'+prevStr+'</td><td class="'+cls+'">'+change+'</td></tr>';});tbody.innerHTML=html;}
+  function initChannelCharts(page){let d=channelData[page];if(!d)return;if(d.mad){drawStackedBarChart(page+'ChannelMadChart',d.mad);renderChannelTable(page+'ChannelMadTable',d.mad);}if(d.new){drawStackedBarChart(page+'ChannelNewChart',d.new);renderChannelTable(page+'ChannelNewTable',d.new);}}
+  function initHomeCharts(){let el=document.getElementById('homeNewTrendChart');if(el){let chart=echarts.init(el,null,{renderer:'canvas'});chart.setOption({grid:{top:16,right:16,bottom:60,left:60,containLabel:true},xAxis:{type:'category',data:['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'],axisLabel:{color:'#6C757D',fontSize:10,rotate:30},axisLine:{lineStyle:{color:'rgba(0,0,0,0.1)'}},splitLine:{show:false}},yAxis:{type:'value',axisLabel:{color:'#6C757D',fontSize:10,formatter:v=>v>=1e4?(v/1e4).toFixed(1)+'万':v},splitLine:{lineStyle:{color:'rgba(0,0,0,0.06)'}},scale:true},legend:{data:['PC','AIPC','Pad','Phone'],top:0,right:0,textStyle:{color:'#6C757D',fontSize:10},icon:'circle',itemWidth:8,itemHeight:8},series:[{name:'PC',type:'line',data:[770003,718853,1309092,876399,1263402,1072915,1236845,1031334,721016,661782,488827,857083],smooth:true,lineStyle:{width:2,color:'#3b82f6'},itemStyle:{color:'#3b82f6'},areaStyle:{color:'#3b82f6',opacity:0.08},symbol:'circle',symbolSize:4},{name:'AIPC',type:'line',data:[79005,102729,302140,205599,339734,219709,267067,219358,162506,159778,138983,214034],smooth:true,lineStyle:{width:2,color:'#8b5cf6'},itemStyle:{color:'#8b5cf6'},areaStyle:{color:'#8b5cf6',opacity:0.08},symbol:'circle',symbolSize:4},{name:'Pad',type:'line',data:[88453,111989,152611,125351,155028,181140,202029,198721,192145,176465,176061,227396],smooth:true,lineStyle:{width:2,color:'#10b981'},itemStyle:{color:'#10b981'},areaStyle:{color:'#10b981',opacity:0.08},symbol:'circle',symbolSize:4},{name:'Phone',type:'line',data:[47707,60942,57176,56138,57745,59958,59706,65779,58311,53726,42638,56780],smooth:true,lineStyle:{width:2,color:'#f59e0b'},itemStyle:{color:'#f59e0b'},areaStyle:{color:'#f59e0b',opacity:0.08},symbol:'circle',symbolSize:4}]});window.addEventListener('resize',()=>chart.resize());}}
+  initHomeCharts();
+})();
+</script>
+</body>
+</html>
